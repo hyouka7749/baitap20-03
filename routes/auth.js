@@ -40,10 +40,10 @@ router.post('/signup', async function (req, res, next) {
         next(error)
     }
 });
-router.get("/me",check_authentication,async function (req, res, next){
+router.get("/me", check_authentication,async function (req, res, next){
     CreateSuccessRes(res, 200,req.user );
 })
-router.post('/changepassword',check_authentication, async function (req, res, next) {
+router.post('/changepassword', check_authentication, async function (req, res, next) {
     let body = req.body;
     let oldpassword = body.oldpassword;
     let newpassword = body.newpassword;

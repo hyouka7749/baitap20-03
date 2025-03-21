@@ -6,7 +6,7 @@ let {check_authentication,check_authorization} = require('../utils/check_auth')
 let constants = require('../utils/constants')
 
 /* GET users listing. */
-router.get('/',check_authentication,check_authorization(constants.ADMIN_PERMISSION), async function (req, res, next) {
+router.get('/', check_authentication, check_authorization(['mod']),  async function (req, res, next) {
   try {
     let users = await userController.GetAllUser();
     CreateSuccessRes(res, 200, users);
@@ -14,15 +14,19 @@ router.get('/',check_authentication,check_authorization(constants.ADMIN_PERMISSI
     next(error)
   }
 });
-router.get('/:id',check_authentication, async function (req, res, next) {
+router.get('/:id', check_authentication, check_authorization(['mod']), async function (req, res, next) {
   try {
-    let user = await userController.GetUserById(req.params.id)
+    // Không cho phép xem chính mình
+    if (req.user._id.toString() === req.params.id) {
+      return CreateErrorRes(res, 403, new Error("Không thể xem thông tin chính bạn"));
+    }
+    let user = await userController.GetUserById(req.params.id);
     CreateSuccessRes(res, 200, user);
   } catch (error) {
     CreateErrorRes(res, 404, error);
   }
 });
-router.post('/', async function (req, res, next) {
+router.post('/', check_authentication, check_authorization(['admin']), async function (req, res, next) {
   try {
     let body = req.body
     let newUser = await userController.CreateAnUser(body.username, body.password, body.email, body.role);
@@ -31,7 +35,7 @@ router.post('/', async function (req, res, next) {
     next(error);
   }
 })
-router.put('/:id', async function (req, res, next) {
+router.put('/:id', check_authentication, check_authorization(['admin']), async function (req, res, next) {
   try {
     let updateUser = await userController.UpdateUser(req.params.id, req.body);
     CreateSuccessRes(res, 200, updateUser);
@@ -39,6 +43,14 @@ router.put('/:id', async function (req, res, next) {
     next(error);
   }
 })
+router.delete('/:id', check_authentication, check_authorization(['admin']), async function (req, res, next) {
+  try {
+    let deletedUser = await userController.DeleteUser(req.params.id); // hàm xóa mềm hoặc cứng tuỳ bạn định nghĩa
+    CreateSuccessRes(res, 200, deletedUser);
+  } catch (error) {
+    next(error);
+  }
+});
 
 
 

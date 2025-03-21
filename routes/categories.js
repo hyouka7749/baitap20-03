@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 let categoryModel = require('../schemas/category')
 
+let { check_authentication, check_authorization } = require('../utils/check_auth');
 
 /* GET users listing. */
 router.get('/', async function(req, res, next) {
@@ -30,20 +31,58 @@ router.get('/:id', async function(req, res, next) {
   }
 });
 
-router.post('/', async function(req, res, next) {
+router.post('/', check_authentication, check_authorization(['mod']), async function(req, res) {
   try {
     let newCategory = new categoryModel({
       name: req.body.name,
-    })
+    });
     await newCategory.save();
     res.status(200).send({
-      success:true,
-      data:newCategory
+      success: true,
+      data: newCategory
     });
   } catch (error) {
-    res.status(404).send({
-      success:false,
-      message:error.message
+    res.status(400).send({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+router.put('/:id', check_authentication, check_authorization(['mod']), async function(req, res) {
+  try {
+    let updatedCategory = await categoryModel.findByIdAndUpdate(
+      req.params.id,
+      { name: req.body.name },
+      { new: true }
+    );
+    res.status(200).send({
+      success: true,
+      data: updatedCategory
+    });
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+router.delete('/:id', check_authentication, check_authorization(['admin']), async function(req, res) {
+  try {
+    let deletedCategory = await categoryModel.findByIdAndUpdate(
+      req.params.id,
+      { isDeleted: true },
+      { new: true }
+    );
+    res.status(200).send({
+      success: true,
+      data: deletedCategory
+    });
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      message: error.message
     });
   }
 });
